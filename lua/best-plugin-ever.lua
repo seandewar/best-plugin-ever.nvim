@@ -175,7 +175,7 @@ function M.start()
   end
 
   api.nvim_create_augroup("BestPluginEver", {})
-  api.nvim_create_autocmd({ "BufLeave", "WinLeave" }, {
+  api.nvim_create_autocmd({ "VimLeavePre", "BufLeave", "WinLeave" }, {
     group = "BestPluginEver",
     buffer = buf,
     once = true,
