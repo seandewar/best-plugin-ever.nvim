@@ -64,13 +64,16 @@ local function update_dog()
   flip = not flip
 end
 
-local function rand_rgb()
-  return math.random(0, 16777216)
-end
-
 local function update_hl()
-  api.nvim_set_hl(0, "BestPluginEverNope", { foreground = rand_rgb() })
-  api.nvim_set_hl(0, "BestPluginEverDog", { foreground = rand_rgb() })
+  local function rand_hl_fg(hl)
+    api.nvim_set_hl(
+      0,
+      hl,
+      { foreground = math.random(0, 16777216), ctermfg = math.random(0, 16) }
+    )
+  end
+  rand_hl_fg "BestPluginEverNope"
+  rand_hl_fg "BestPluginEverDog"
   vim.cmd "redraw!"
 end
 
