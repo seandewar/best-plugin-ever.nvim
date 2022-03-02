@@ -48,11 +48,11 @@ for _, line in ipairs(dog) do
 end
 
 local ns = api.nvim_create_namespace "best-plugin-ever"
-local dog_timer, hl_timer = loop.new_timer(), loop.new_timer()
-local buf, win, dog_extmark
+local stuff_timer, hl_timer = loop.new_timer(), loop.new_timer()
+local buf, win, dog_extmark, rocket_buf, rocket_wins
 
 local tick = 1
-local function update_dog()
+local function update_stuff()
   api.nvim_buf_set_lines(
     buf,
     #nope,
@@ -67,6 +67,20 @@ local function update_dog()
     0,
     { id = dog_extmark, end_row = #nope + #dog, hl_group = "BestPluginEverDog" }
   )
+
+  for i, rocket_win in ipairs(rocket_wins) do
+    local offset = i % 3 == 0 and 2 or 1
+    local config = api.nvim_win_get_config(rocket_win)
+    local row = config.row[vim.val_idx]
+
+    if row < 1 then
+      config.col = math.random(0, vim.o.columns - 1)
+      config.row = math.max(0, vim.o.lines - vim.o.cmdheight - offset)
+    else
+      config.row = math.max(0, row - offset)
+    end
+    api.nvim_win_set_config(rocket_win, config)
+  end
 
   local echo_text = "NOPE "
   local len = math.max(0, math.floor(vim.o.columns / #echo_text) - 4)
@@ -97,6 +111,7 @@ local function update_hl()
       { foreground = math.random(0, 16777216), ctermfg = math.random(0, 16) }
     )
   end
+
   rand_hl_fg "BestPluginEverNope"
   rand_hl_fg "BestPluginEverDog"
   vim.cmd "redraw!"
@@ -134,29 +149,59 @@ function M.start()
     relative = "editor",
     style = "minimal",
     border = "rounded",
+    zindex = 300,
     width = width,
     height = height,
     col = math.max(0, math.floor((vim.o.columns - width) / 2) - 1),
     row = math.max(0, math.floor((vim.o.lines - height) / 2) - 1),
   })
 
-  api.nvim_create_autocmd("WinLeave", {
-    once = true,
+  if not rocket_buf or not api.nvim_buf_is_loaded(rocket_buf) then
+    rocket_buf = api.nvim_create_buf(false, true)
+    api.nvim_buf_set_lines(rocket_buf, 0, -1, true, { "🚀" })
+  end
+
+  rocket_wins = {}
+  for i = 1, math.floor(vim.o.columns / 5) do
+    rocket_wins[i] = api.nvim_open_win(rocket_buf, false, {
+      relative = "editor",
+      style = "minimal",
+      zindex = 150,
+      width = 2,
+      height = 1,
+      col = math.random(0, math.max(0, vim.o.columns - 1)),
+      row = math.random(0, math.max(0, vim.o.lines - vim.o.cmdheight)),
+    })
+  end
+
+  api.nvim_create_augroup("BestPluginEver", {})
+  api.nvim_create_autocmd({ "BufLeave", "WinLeave" }, {
+    group = "BestPluginEver",
     buffer = buf,
+    once = true,
     callback = function()
+      if not win then
+        return
+      end
+
       hl_timer:stop()
-      dog_timer:stop()
-      api.nvim_echo({ { "" } }, false, {})
+      stuff_timer:stop()
+
       api.nvim_win_close(win, true)
       win = nil
+      api.nvim_echo({ { "" } }, false, {})
+      for _, rocket_win in ipairs(rocket_wins) do
+        api.nvim_win_close(rocket_win, true)
+      end
+      rocket_wins = nil
     end,
   })
 
   hl_timer:start(0, 250, function()
     update(update_hl)
   end)
-  dog_timer:start(0, 500, function()
-    update(update_dog)
+  stuff_timer:start(0, 500, function()
+    update(update_stuff)
   end)
 end
 
