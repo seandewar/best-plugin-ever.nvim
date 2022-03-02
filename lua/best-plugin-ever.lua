@@ -77,6 +77,14 @@ local function update_hl()
   vim.cmd "redraw!"
 end
 
+local function update(fn)
+  vim.schedule(function()
+    api.nvim_buf_set_option(buf, "modifiable", true)
+    fn()
+    api.nvim_buf_set_option(buf, "modifiable", false)
+  end)
+end
+
 local M = {}
 
 local width, height = 50, 28
@@ -118,8 +126,12 @@ function M.start()
     end,
   })
 
-  hl_timer:start(0, 250, vim.schedule_wrap(update_hl))
-  dog_timer:start(0, 500, vim.schedule_wrap(update_dog))
+  hl_timer:start(0, 250, function()
+    update(update_hl)
+  end)
+  dog_timer:start(0, 500, function()
+    update(update_dog)
+  end)
 end
 
 return M
