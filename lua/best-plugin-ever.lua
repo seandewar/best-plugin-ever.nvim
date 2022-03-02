@@ -51,9 +51,15 @@ local ns = api.nvim_create_namespace "best-plugin-ever"
 local dog_timer, hl_timer = loop.new_timer(), loop.new_timer()
 local buf, win, dog_extmark
 
-local flip = false
+local tick = 1
 local function update_dog()
-  api.nvim_buf_set_lines(buf, #nope, -1, true, flip and dog_flipped or dog)
+  api.nvim_buf_set_lines(
+    buf,
+    #nope,
+    -1,
+    true,
+    tick % 2 == 0 and dog or dog_flipped
+  )
   dog_extmark = api.nvim_buf_set_extmark(
     buf,
     ns,
@@ -61,7 +67,26 @@ local function update_dog()
     0,
     { id = dog_extmark, end_row = #nope + #dog, hl_group = "BestPluginEverDog" }
   )
-  flip = not flip
+
+  local echo_text = "NOPE "
+  local len = math.max(0, math.floor(vim.o.columns / #echo_text) - 4)
+  local chunks = {}
+  for i = 1, len do
+    local text = echo_text
+    if i == 1 then
+      text = text:sub(1 + (tick % #text))
+    elseif i == len then
+      text = text:sub(1, (tick % #text) - #text)
+    end
+    chunks[i] = {
+      text,
+      i % 2 == 0 and "BestPluginEverNope" or "BestPluginEverDog",
+    }
+  end
+  vim.cmd "redraw"
+  api.nvim_echo(chunks, false, {})
+
+  tick = tick + 1
 end
 
 local function update_hl()
@@ -121,6 +146,7 @@ function M.start()
     callback = function()
       hl_timer:stop()
       dog_timer:stop()
+      api.nvim_echo({ { "" } }, false, {})
       api.nvim_win_close(win, true)
       win = nil
     end,
