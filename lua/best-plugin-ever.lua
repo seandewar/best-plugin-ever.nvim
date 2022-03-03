@@ -119,9 +119,11 @@ end
 
 local function update(fn)
   vim.schedule(function()
-    api.nvim_buf_set_option(buf, "modifiable", true)
-    fn()
-    api.nvim_buf_set_option(buf, "modifiable", false)
+    if win then
+      api.nvim_buf_set_option(buf, "modifiable", true)
+      fn()
+      api.nvim_buf_set_option(buf, "modifiable", false)
+    end
   end)
 end
 
