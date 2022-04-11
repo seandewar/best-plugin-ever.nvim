@@ -15,7 +15,7 @@ if vim.g.loaded_best_plugin_ever then
 end
 vim.g.loaded_best_plugin_ever = 1
 
-api.nvim_add_user_command("BestPluginEver", function()
+api.nvim_create_user_command("BestPluginEver", function()
   require("best-plugin-ever").start()
 end, {
   desc = "EXPERIENCE the best plugin ever!!!",
